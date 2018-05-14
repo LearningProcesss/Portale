@@ -1,0 +1,27 @@
+<div class="container">
+    <div class="row">
+        <div class="btn-group">
+            <a class="btn btn-success" href="/tickets">Indietro</a>
+            <button type="button" class="btn btn-primary">..</button>
+            <button type="button" class="btn btn-primary">..</button>
+        </div>
+        <div class="well">{{ticket.titolo}}</div>
+        <div class="panel-group">
+            {{#each ticket.eventi}}
+            <hr>
+            <h6>Inviato il:</h6>
+            <p>{{creatoIl}}</p>
+            <div class="panel panel-default">
+                <div class="panel-body">{{testo}}</div>
+            </div>
+            {{/each}}
+        </div>
+        <form action="">
+            <div class="form-group">
+                <label for="eventoTecnico">Aggiungi evento:</label>
+                <textarea class="form-control" id="eventoTecnico"></textarea>
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+    </div>
+</div>
