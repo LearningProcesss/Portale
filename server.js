@@ -6,6 +6,8 @@ const fs = require('fs');
 const db = require('./server/db/mongoose');
 const _ = require('lodash');
 var bodyParser = require('body-parser');
+var morgan = require('morgan');
+var path = require('path');
 
 var { ObjectID } = require('mongodb');
 var { Ticket } = require('./server/models/ticket');
@@ -13,6 +15,7 @@ var { Tecnico } = require('./server/models/tecnico');
 
 var app = express();
 
+var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
 
 // hbs.registerPartials(__dirname + '/views/partials');
 app.set('views', __dirname + '/views');
@@ -24,6 +27,7 @@ app.use(cookieSession({
     name: 'session',
     keys: ['key1', 'key2']
 }));
+app.use(morgan('combined', { stream: accessLogStream }))
 
 
 hbs.registerHelper('prioClass', (valorePrioTicket) => {
@@ -52,6 +56,14 @@ hbs.registerHelper('ultimoEvento', (eventi) => {
     }
 
     return '';
+});
+
+hbs.registerHelper('tecniciPortale', () => {
+    Tecnico.find().then((tecnici) => {
+
+    }).catch((error) => {
+
+    });
 });
 
 var autenticato = (req, resp, next) => {
@@ -89,7 +101,7 @@ var autenticato = (req, resp, next) => {
 };
 
 app.get('/', (req, resp) => {
-    resp.render('index');
+    resp.render('dashboard');
 });
 
 app.get('/signin', (req, resp) => {
@@ -100,9 +112,13 @@ app.get('/login', (req, resp) => {
     resp.render('login');
 });
 
+app.get('/dashboard', (req, resp) => {
+    resp.render('dashboard');
+});
+
 app.post('/logout', (req, resp) => {
     req.session = null;
-    resp.redirect('index');
+    resp.redirect('dashboard');
 });
 
 app.post('/loginOrSignin', (req, resp) => {
@@ -116,7 +132,6 @@ app.post('/loginOrSignin', (req, resp) => {
 
         if (!_.isNull(tecnico)) {
             var token = tecnico.generaTocken();
-            // resp.header('x-auth', token).render('tickets');
 
             req.session.xt = token;
 
@@ -127,7 +142,6 @@ app.post('/loginOrSignin', (req, resp) => {
             tecnico.save().then(() => {
                 return tecnico.generaTocken();
             }).then((token) => {
-                //resp.header('x-auth', token).render('tickets');
                 req.session.xt = token;
                 resp.redirect('/tickets');
             }).catch(() => {
@@ -141,7 +155,7 @@ app.post('/loginOrSignin', (req, resp) => {
 app.get('/tickets', autenticato, (req, resp) => {
 
     Ticket.find().then((tickets) => {
-        resp.render('tickets.hbs', { tickets });
+        resp.render('tickets', { tickets });
     }, (errore) => {
         resp.status(400).send();
     });
