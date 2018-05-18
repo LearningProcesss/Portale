@@ -1,5 +1,6 @@
 require('./server/config/config');
 var express = require('express');
+var cookieSession = require('cookie-session')
 const hbs = require('hbs');
 const fs = require('fs');
 const db = require('./server/db/mongoose');
@@ -19,6 +20,10 @@ app.set('view engine', 'hbs');
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieSession({
+    name: 'session',
+    keys: ['key1', 'key2']
+}));
 
 
 hbs.registerHelper('prioClass', (valorePrioTicket) => {
@@ -50,29 +55,37 @@ hbs.registerHelper('ultimoEvento', (eventi) => {
 });
 
 var autenticato = (req, resp, next) => {
-    console.log('start autenticato');
+    console.log('********************** start autenticato ************************');
 
-    var token = req.header('x-auth');
+    var x = req.session.xt;
 
-    console.log(token);
+    console.log(x);
+
+    // var token = req.header('x-auth');
+
+    // console.log(token);
 
 
-    if (_.isUndefined(token)) {
-        next();
+    if (_.isUndefined(x)) {
+        resp.redirect('login');
     }
 
-    Tecnico.findByToken(token).then((tecnico) => {
-        if (!tecnico) {
-            return Promise.reject();
-        }
+    if (!_.isUndefined(x)) {
+        Tecnico.findByToken(x).then((tecnico) => {
+            if (!tecnico) {
+                return Promise.reject();
+            }
 
-        req.tecnico = tecnico;
-        req.token = token;
+            req.tecnico = tecnico;
+            req.token = x;
 
-        next();
-    }).catch((error) => {
-        // resp.status(401).send();
-    });
+            next();
+        }).catch((error) => {
+            resp.redirect('login');
+        });
+    }
+
+    console.log('********************** end autenticato ************************');
 };
 
 app.get('/', (req, resp) => {
@@ -83,28 +96,40 @@ app.get('/signin', (req, resp) => {
     resp.render('signin');
 });
 
-app.get('/login', autenticato, (req, resp) => {
+app.get('/login', (req, resp) => {
     resp.render('login');
+});
+
+app.post('/logout', (req, resp) => {
+    req.session = null;
+    resp.redirect('index');
 });
 
 app.post('/loginOrSignin', (req, resp) => {
 
     var tecnicoFromHtml = _.pick(req.body, ['nome', 'cognome', 'password', 'email']);
-    console.log('loginOrSignin', tecnicoFromHtml);
+
+    console.log('loginOrSignin tecnicologin', tecnicoFromHtml);
 
     Tecnico.findOne({ email: tecnicoFromHtml.email }).then((tecnico) => {
         console.log('loginOrSignin', tecnico);
 
         if (!_.isNull(tecnico)) {
             var token = tecnico.generaTocken();
-            resp.header('x-auth', token).render('tickets');
+            // resp.header('x-auth', token).render('tickets');
+
+            req.session.xt = token;
+
+            resp.redirect('/tickets');
         } else {
             var tecnico = new Tecnico(tecnicoFromHtml);
 
             tecnico.save().then(() => {
                 return tecnico.generaTocken();
             }).then((token) => {
-                resp.header('x-auth', token).render('tickets');
+                //resp.header('x-auth', token).render('tickets');
+                req.session.xt = token;
+                resp.redirect('/tickets');
             }).catch(() => {
                 resp.status(400).send();
             });
@@ -123,7 +148,7 @@ app.get('/tickets', autenticato, (req, resp) => {
 
 });
 
-app.get('/tickets/:id', (req, resp) => {
+app.get('/tickets/:id', autenticato, (req, resp) => {
 
     if (!ObjectID.isValid(req.params.id)) {
         return resp.status(404).send();
