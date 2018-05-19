@@ -67,11 +67,11 @@ hbs.registerHelper('tecniciPortale', () => {
 });
 
 var autenticato = (req, resp, next) => {
-    console.log('********************** start autenticato ************************');
+    // console.log('********************** start autenticato ************************');
 
     var x = req.session.xt;
 
-    console.log(x);
+    // console.log(x);
 
     // var token = req.header('x-auth');
 
@@ -97,7 +97,7 @@ var autenticato = (req, resp, next) => {
         });
     }
 
-    console.log('********************** end autenticato ************************');
+    // console.log('********************** end autenticato ************************');
 };
 
 app.get('/', (req, resp) => {
@@ -153,7 +153,7 @@ app.post('/loginOrSignin', (req, resp) => {
 });
 
 app.get('/tickets', autenticato, (req, resp) => {
-
+    console.log(req.query);
     Ticket.find().then((tickets) => {
         resp.render('tickets', { tickets });
     }, (errore) => {
@@ -163,20 +163,18 @@ app.get('/tickets', autenticato, (req, resp) => {
 });
 
 app.get('/tickets/:id', autenticato, (req, resp) => {
-
     if (!ObjectID.isValid(req.params.id)) {
         return resp.status(404).send();
     }
 
     Ticket.findById(req.params.id).then((ticket) => {
-        resp.render('ticket.hbs', { ticket });
+        resp.render('ticket', { ticket });
     }).catch((errore) => {
         return resp.status(404).send();
     });
 });
 
 app.post('/tickets', (req, resp) => {
-
     var ticket = new Ticket({
         titolo: req.body.titolo,
         prio: req.body.prio,
