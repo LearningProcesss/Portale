@@ -167,17 +167,18 @@ app.post('/loginOrSignin', (req, resp) => {
 app.get('/tickets', autenticato, (req, resp) => {
     // const query = qs.parse(req.query);
 
-    var query = processQuery(req.query,
-        { 
-            _idTecnico: { 
-                dataType: 'objectId'
-            },
-            titolo: {
-                dataType: 'string'
-            }
-        },
-        true
-    );
+    // var query = processQuery(req.query,
+    //     { 
+    //         _idTecnico: { 
+    //             dataType: 'objectId'
+    //         },
+    //         titolo: {
+    //             dataType: 'string'
+    //         }
+    //     },
+    //     true
+    // );
+    var query = processQuery(req.query);
 
     Ticket.find(query.filter).populate('_idCliente', 'nome cognome').then((tickets) => {
         resp.render('tickets', { tickets });
