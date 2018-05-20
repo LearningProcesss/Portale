@@ -9,15 +9,21 @@ var TicketSchema = mongoose.Schema({
         minlength: 1,
         trim: true
     },
-    prio: {
-        type: String,
-        required: true,
-        minlength: 1,
-        trim: true
+    _idPrio: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Prio'
     },
-    tipo: {
-        type: String,
-        trim: true
+    _idTask: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Task'
+    },
+    _idCliente: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cliente'
+    },
+    _idTecnico: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tecnico'
     },
     stato: {
         type: String,
@@ -45,14 +51,6 @@ var TicketSchema = mongoose.Schema({
             type: Number
         }
     }]
-    // ,
-    // _idCliente: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     required: true
-    // },
-    // _idTecnico: {
-
-    // },
 });
 
 TicketSchema.pre('save', function (next) {

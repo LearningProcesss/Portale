@@ -9,7 +9,7 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li>
-                        <a href="/tickets/?orderBy=azienda">Azienda</a>
+                        <a href="/tickets/orderBy/prio">Prio</a>
                     </li>
                     <li>
                         <a href="#">Utente</a>
@@ -40,28 +40,12 @@
                         <p>{{prio}}</p>
                     </div>
                     <div class='panel-footer'>
-                        {{!--
-                        <a class='btn btn-default' href='#'>+1</a> --}}
-                        <a class="btn btn-info" href="/tickets/{{_id}}">Apri</a>
+                        <a class="btn btn-success" href="/tickets/{{_id}}">Apri</a>
                     </div>
                 </div>
             </div>
             {{/each}}
         </div>
-        {{!--
-        <div class="col-sm-2">
-            <ul class="nav nav-pills">
-                <li role="presentation" class="active">
-                    <a href="#">Home</a>
-                </li>
-                <li role="presentation">
-                    <a href="#">Profile</a>
-                </li>
-                <li role="presentation">
-                    <a href="#">Messages</a>
-                </li>
-            </ul>
-        </div> --}}
     </div>
 
 </div>

@@ -12,6 +12,10 @@ var path = require('path');
 var { ObjectID } = require('mongodb');
 var { Ticket } = require('./server/models/ticket');
 var { Tecnico } = require('./server/models/tecnico');
+var { Cliente } = require('./server/models/cliente');
+var { Azienda } = require('./server/models/azienda');
+var { Prio } = require('./server/models/prio');
+var { Task } = require('./server/models/task');
 
 var app = express();
 
@@ -58,6 +62,14 @@ hbs.registerHelper('ultimoEvento', (eventi) => {
     return '';
 });
 
+hbs.registerHelper('clientidb', () => {
+    Cliente.find().select('nome cognome').then((clienti) => {
+        console.log(clienti);
+
+        return clienti;
+    });
+});
+
 hbs.registerHelper('tecniciPortale', () => {
     Tecnico.find().then((tecnici) => {
 
@@ -67,16 +79,7 @@ hbs.registerHelper('tecniciPortale', () => {
 });
 
 var autenticato = (req, resp, next) => {
-    // console.log('********************** start autenticato ************************');
-
     var x = req.session.xt;
-
-    // console.log(x);
-
-    // var token = req.header('x-auth');
-
-    // console.log(token);
-
 
     if (_.isUndefined(x)) {
         resp.redirect('login');
@@ -96,8 +99,6 @@ var autenticato = (req, resp, next) => {
             resp.redirect('login');
         });
     }
-
-    // console.log('********************** end autenticato ************************');
 };
 
 app.get('/', (req, resp) => {
@@ -112,7 +113,7 @@ app.get('/login', (req, resp) => {
     resp.render('login');
 });
 
-app.get('/dashboard', (req, resp) => {
+app.get('/dashboard', autenticato, (req, resp) => {
     resp.render('dashboard');
 });
 
@@ -125,10 +126,7 @@ app.post('/loginOrSignin', (req, resp) => {
 
     var tecnicoFromHtml = _.pick(req.body, ['nome', 'cognome', 'password', 'email']);
 
-    console.log('loginOrSignin tecnicologin', tecnicoFromHtml);
-
     Tecnico.findOne({ email: tecnicoFromHtml.email }).then((tecnico) => {
-        console.log('loginOrSignin', tecnico);
 
         if (!_.isNull(tecnico)) {
             var token = tecnico.generaTocken();
@@ -137,6 +135,7 @@ app.post('/loginOrSignin', (req, resp) => {
 
             resp.redirect('/tickets');
         } else {
+
             var tecnico = new Tecnico(tecnicoFromHtml);
 
             tecnico.save().then(() => {
@@ -153,8 +152,9 @@ app.post('/loginOrSignin', (req, resp) => {
 });
 
 app.get('/tickets', autenticato, (req, resp) => {
-    console.log(req.query);
-    Ticket.find().then((tickets) => {
+    console.log('/tickets', req.query);
+    Ticket.find().populate('_idCliente', 'nome cognome').then((tickets) => {
+        console.log(tickets);
         resp.render('tickets', { tickets });
     }, (errore) => {
         resp.status(400).send();
@@ -162,7 +162,27 @@ app.get('/tickets', autenticato, (req, resp) => {
 
 });
 
+app.get('/tickets/:actions/:property', autenticato, (req, resp) => {
+    console.log('/tickets/:actions/:property', req.params, req.query);
+
+    var sorter = {};
+
+    sorter[req.params.property] = 1;
+
+    if (req.params.actions === 'orderBy') {
+        Ticket.find({}).sort(sorter).then((tickets) => {
+            resp.render('tickets', { tickets });
+        }).catch((error) => {
+            console.log(error);
+
+            resp.status(400).send();
+        });
+    }
+});
+
+
 app.get('/tickets/:id', autenticato, (req, resp) => {
+
     if (!ObjectID.isValid(req.params.id)) {
         return resp.status(404).send();
     }
@@ -174,17 +194,50 @@ app.get('/tickets/:id', autenticato, (req, resp) => {
     });
 });
 
-app.post('/tickets', (req, resp) => {
-    var ticket = new Ticket({
-        titolo: req.body.titolo,
-        prio: req.body.prio,
-        tipo: req.body.tipo,
-        _idCliente: 1
+app.get('/nuovoTicket', autenticato, (req, resp) => {
+    var viewModel = {};
+    return Cliente.find().populate('_idAzienda', 'nomeAzienda').select('nome cognome').then((clienti) => {
+        console.log(clienti);
+        viewModel['clientidb'] = clienti;
+        return viewModel;
+    }).then((viewModel) => {
+        return Tecnico.find().select('nome cognome').then((tecnici) => {
+            viewModel['tecnicidb'] = tecnici;
+            return viewModel;
+        });
+    }).then((viewModel) => {
+        return Prio.find().then((prios) => {
+            viewModel['priodb'] = prios;
+            return viewModel;
+        });
+    }).then((viewModel) => {
+        return Task.find().then((tasks) => {
+            viewModel['taskdb'] = tasks;
+            return viewModel;
+        });
+    }).then((viewModel) => {
+        console.log(viewModel);
+        resp.render('creaTicket', { viewModel });
+    }).catch((error) => {
+        console.log(error);
     });
+});
+
+app.post('/tickets', (req, resp) => {
+
+    // console.log(req.body);
+
+    var ticketBody = _.pick(req.body, ['titolo', '_idCliente', '_idTask', '_idPrio', '_idTecnico']);
+
+    console.log(ticketBody);
+    
+    // resp.redirect('dashboard');
+
+    var ticket = new Ticket(ticketBody);
 
     ticket.save().then((result) => {
-        console.log(result);
-        resp.status(200).send(ticket);
+        
+        resp.render('tickets');
     }, (errore) => {
         console.log(errore);
 
