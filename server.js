@@ -8,6 +8,8 @@ const _ = require('lodash');
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var path = require('path');
+const mongoQS = require('mongo-querystring');
+const qs = require('query-params-mongo');
 
 var { ObjectID } = require('mongodb');
 var { Ticket } = require('./server/models/ticket');
@@ -20,6 +22,17 @@ var { Task } = require('./server/models/task');
 var app = express();
 
 var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+
+// var qs = new mongoQS({});
+var processQuery = qs({
+    autoDetect: [
+        { 
+            fieldPattern: /_id$/, 
+            dataType: 'objectId' 
+        }
+    ],
+    converters: { objectId: ObjectID }
+});
 
 // hbs.registerPartials(__dirname + '/views/partials');
 app.set('views', __dirname + '/views');
@@ -152,9 +165,21 @@ app.post('/loginOrSignin', (req, resp) => {
 });
 
 app.get('/tickets', autenticato, (req, resp) => {
-    console.log('/tickets', req.query);
-    Ticket.find().populate('_idCliente', 'nome cognome').then((tickets) => {
-        console.log(tickets);
+    // const query = qs.parse(req.query);
+
+    var query = processQuery(req.query,
+        { 
+            _idTecnico: { 
+                dataType: 'objectId'
+            },
+            titolo: {
+                dataType: 'string'
+            }
+        },
+        true
+    );
+
+    Ticket.find(query.filter).populate('_idCliente', 'nome cognome').then((tickets) => {
         resp.render('tickets', { tickets });
     }, (errore) => {
         resp.status(400).send();
@@ -224,23 +249,11 @@ app.get('/nuovoTicket', autenticato, (req, resp) => {
 });
 
 app.post('/tickets', (req, resp) => {
-
-    // console.log(req.body);
-
     var ticketBody = _.pick(req.body, ['titolo', '_idCliente', '_idTask', '_idPrio', '_idTecnico']);
-
-    console.log(ticketBody);
-    
-    // resp.redirect('dashboard');
-
     var ticket = new Ticket(ticketBody);
-
     ticket.save().then((result) => {
-        
         resp.render('tickets');
     }, (errore) => {
-        console.log(errore);
-
         resp.status(400).send(errore);
     });
 });

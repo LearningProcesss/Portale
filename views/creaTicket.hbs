@@ -1,49 +1,159 @@
+<!--
 <div class="container">
-    <div class="row">
-        <div class="col-sm-6">
-            <form action="/tickets" method="POST">
-                <div class="form-group">
-                    <label for="titolo">Titolo:</label>
-                    <input type="text" class="form-control" id="titolo" name="titolo">
+    <form action="/tickets" method="POST" class="form-horizontal">
+        <div class="form-group">
+            <label for="titolo">Titolo:</label>
+            <input type="text" class="form-control" id="titolo" name="titolo">
+        </div>
+        <div class="form-group">
+            <div class="col-sm-6">
+                <label for="cliente">Cliente:</label>
+                <select id="cliente" class="form-control" name="_idCliente">
+                    <option value=""></option>
+                    {{#each viewModel.clientidb}}
+                    <option value="{{_id}}">{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div class="col-sm-6">
+                <label for="prio">Prio:</label>
+                <select id="prio" class="form-control" name="_idPrio">
+                    <option value=""></option>
+                    {{#each viewModel.priodb}}
+                    <option value="{{_id}}">{{nome}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+
+        </div>
+        <div class="form-group">
+            <label for="task">Task:</label>
+            <select id="task" class="form-control" name="_idTask">
+                <option value=""></option>
+                {{#each viewModel.taskdb}}
+                <option value="{{_id}}">{{nome}}</option>
+                {{/each}}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="tecnico">Assegna a:</label>
+            <select id="tecnico" class="form-control" name="_idTecnico">
+                <option value=""></option>
+                {{#each viewModel.tecnicidb}}
+                <option value="{{_id}}">{{cognome}} {{nome}}</option>
+                {{/each}}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+</div>
+-->
+
+<div class="container">
+    <form role="form" class="form-horizontal" action="/tickets" method="POST">
+        <div class="form-group">
+            <div class="col-sm-6">
+                <div class="well well-sm">
+                    Crea Ticket
                 </div>
-                <div class="form-group">
-                    <label for="cliente">Cliente:</label>
-                    <select id="cliente" class="form-control" name="_idCliente">
-                        <option value=""></option>
-                        {{#each viewModel.clientidb}}
-                        <option value="{{_id}}">{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}}</option>
-                        {{/each}}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="prio">Prio:</label>
-                    <select id="prio" class="form-control" name="_idPrio">
-                        <option value=""></option>
-                        {{#each viewModel.priodb}}
-                        <option value="{{_id}}">{{nome}}</option>
-                        {{/each}}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="task">Task:</label>
-                    <select id="task" class="form-control" name="_idTask">
-                        <option value=""></option>
-                        {{#each viewModel.taskdb}}
-                        <option value="{{_id}}">{{nome}}</option>
-                        {{/each}}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="tecnico">Assegna a:</label>
-                    <select id="tecnico" class="form-control" name="_idTecnico">
-                        <option value=""></option>
-                        {{#each viewModel.tecnicidb}}
-                        <option value="{{_id}}">{{cognome}} {{nome}}</option>
-                        {{/each}}
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-success">Submit</button>
-            </form>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-6">
+                <label for="titolo">Titolo:</label>
+                <input type="text" class="form-control" id="titolo" name="titolo">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-3">
+                <label for="cliente">Cliente</label>
+                <select id="cliente" class="form-control" name="_idCliente">
+                    <option value=""></option>
+                    {{#each viewModel.clientidb}}
+                    <option value="{{_id}}">{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-3">
+                <label for="task">Task:</label>
+                <select id="task" class="form-control" name="_idTask">
+                    <option value=""></option>
+                    {{#each viewModel.taskdb}}
+                    <option value="{{_id}}">{{nome}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <label for="prio">Prio:</label>
+                <select id="prio" class="form-control" name="_idPrio">
+                    <option value=""></option>
+                    {{#each viewModel.priodb}}
+                    <option value="{{_id}}">{{nome}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-12" for="tecnico">Assegna a:</label>
+            <div class="col-sm-6">
+                <select id="tecnico" class="form-control" name="_idTecnico">
+                    <option value=""></option>
+                    {{#each viewModel.tecnicidb}}
+                    <option value="{{_id}}">{{cognome}} {{nome}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+        <!--
+        <div class="form-group">
+            <label class="col-sm-12">Phone number</label>
+            <div class="col-sm-1">
+                <input type="text" class="form-control" placeholder="000">
+                <div class="help">area</div>
+            </div>
+            <div class="col-sm-1">
+                <input type="text" class="form-control" placeholder="000">
+                <div class="help">local</div>
+            </div>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" placeholder="1111">
+                <div class="help">number</div>
+            </div>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" placeholder="123">
+                <div class="help">ext</div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-1">Options</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" placeholder="Option 1">
+            </div>
+            <div class="col-sm-3">
+                <input type="text" class="form-control" placeholder="Option 2">
+            </div>
+        </div>
+        -->
+        <div class="form-group">
+            <div class="col-sm-6">
+                {{!--
+                <button type="submit" class="btn btn-info pull-right">Submit</button> --}}
+                <button type="submit" class="btn btn-primary btn-block">Crea</button>
+            </div>
+        </div>
+    </form>
+    <!--
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h4 class='panel-title'>Nuovo Ticket</h4>
+        </div>
+        <div class="panel-body">
+            
         </div>
     </div>
+    -->
 </div>

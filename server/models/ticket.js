@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var moment = require('moment');
+var { Stato } = require('./stato');
 const _ = require('lodash');
 
 var TicketSchema = mongoose.Schema({
@@ -25,9 +26,9 @@ var TicketSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tecnico'
     },
-    stato: {
-        type: String,
-        trim: true
+    _idStato: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Stato'
     },
     creatoIl: {
         type: Number
@@ -59,8 +60,8 @@ TicketSchema.pre('save', function (next) {
 
     ticket.creatoIl = moment.now();
 
-    if (_.isUndefined(ticket.stato)) {
-        ticket.stato = 'Inbox';
+    if (_.isUndefined(ticket._idStato)) {
+        ticket._idStato = 'Inbox';
     }
 
     next();
