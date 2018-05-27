@@ -1,6 +1,13 @@
 <section>
     <div class="container">
         <div class="row">
+            <div class="col-md-10">
+                <h4>
+                    {{viewModel.ticket.titolo}}
+                </h4>
+            </div>
+        </div>
+        <div class="row">
             <!--
             <header id="header">
                 <div class="container">
@@ -49,21 +56,38 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="list-group">
-                                <a href="index.html" class="list-group-item active main-color-bg">
-                                    <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> Ticket
+                                <a href="" class="list-group-item active main-color-bg">
+                                    Info
                                 </a>
-                                <a href="pages.html" class="list-group-item">
-                                    <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span> Pages
-                                    <span class="badge">12</span>
-                                </a>
-                                <a href="posts.html" class="list-group-item">
-                                    <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Posts
-                                    <span class="badge">33</span>
-                                </a>
-                                <a href="users.html" class="list-group-item">
-                                    <span class="glyphicon glyphicon-user" aria-hidden="true"></span> Users
-                                    <span class="badge">203</span>
-                                </a>
+                                <select id="_idCliente" class="form-control" name="_idCliente">
+                                    <option value=""></option>
+                                    {{#each viewModel.clientidb}}
+                                    <!--<option value="{{_id}}" {{#ifCond _id '==' ../../_idCliente }} selected="selected" {{/ifCond}}>{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}} | parent {{../../_idCliente}}</option>-->
+                                    <option value="{{_id}}" {{#if selected }} selected="selected" {{/if}}>{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}}</option>
+                                    {{/each}}
+                                </select>
+                                <select id="_idPrio" class="form-control" name="_idPrio">
+                                    <option value=""></option>
+                                    {{#each viewModel.priodb}}
+                                    <!--<option value="{{_id}}" {{#ifCond _id '==' ../../_idCliente }} selected="selected" {{/ifCond}}>{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}} | parent {{../../_idCliente}}</option>-->
+                                    <option value="{{_id}}" {{#if selected }} selected="selected" {{/if}}>{{nome}}</option>
+                                    {{/each}}
+                                </select>
+                                <select id="_idStato" class="form-control" name="_idStato">
+                                    <option value=""></option>
+                                    {{#each viewModel.statidb}}
+                                    <!--<option value="{{_id}}" {{#ifCond _id '==' ../../_idCliente }} selected="selected" {{/ifCond}}>{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}} | parent {{../../_idCliente}}</option>-->
+                                    <option value="{{_id}}" {{#if selected }} selected="selected" {{/if}}>{{nome}}</option>
+                                    {{/each}}
+                                </select>
+                                <select id="_idTask" class="form-control" name="_idTask">
+                                    <option value=""></option>
+                                    {{#each viewModel.taskdb}}
+                                    <!--<option value="{{_id}}" {{#ifCond _id '==' ../../_idCliente }} selected="selected" {{/ifCond}}>{{cognome}} {{nome}} | {{this._idAzienda.nomeAzienda}} | parent {{../../_idCliente}}</option>-->
+                                    <option value="{{_id}}" {{#if selected }} selected="selected" {{/if}}>{{nome}}</option>
+                                    {{/each}}
+                                </select>
+                                <button class="btn btn-success form-control">Indietro</button>
                             </div>
                             <!--
                             <div class="well">
@@ -83,7 +107,6 @@
                             -->
                         </div>
                         <div class="col-md-9" style="width:850px; height:700px; overflow: auto;">
-                            <!-- Website Overview -->
                             {{#each viewModel.ticket.eventi}}
                             <div class="panel panel-default">
                                 <div class="panel-heading main-color-bg">
@@ -100,12 +123,13 @@
                         </div>
                         <div class="row">
                             <div class="col-lg-12">
-                                <form action="/tickets/{{viewModel.ticket._id}}" method="POST">
+                                <form action="/tickets/{{viewModel.ticket._id}}" method="POST" id="formInvioEvento">
                                     <div class="form-group">
                                         <label for="nuovoEventoTicket">Aggiungi evento:</label>
                                         <textarea class="form-control" id="nuovoEventoTicket" name="nuovoEventoTicket"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success">Invia</button>
+                                    <button type="button" class="btn btn-info">Allega file</button>
                                 </form>
                             </div>
 

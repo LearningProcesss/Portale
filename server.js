@@ -77,6 +77,29 @@ hbs.registerHelper('ultimoEvento', (eventi) => {
     return '';
 });
 
+hbs.registerHelper('ifCond', function (v1, operator, v2, options) {
+    switch (operator) {
+        case '==':
+            return (v1 == v2) ? options.fn(this) : options.inverse(this);
+        case '===':
+            return (v1 === v2) ? options.fn(this) : options.inverse(this);
+        case '<':
+            return (v1 < v2) ? options.fn(this) : options.inverse(this);
+        case '<=':
+            return (v1 <= v2) ? options.fn(this) : options.inverse(this);
+        case '>':
+            return (v1 > v2) ? options.fn(this) : options.inverse(this);
+        case '>=':
+            return (v1 >= v2) ? options.fn(this) : options.inverse(this);
+        case '&&':
+            return (v1 && v2) ? options.fn(this) : options.inverse(this);
+        case '||':
+            return (v1 || v2) ? options.fn(this) : options.inverse(this);
+        default:
+            return options.inverse(this);
+    }
+});
+
 // hbs.registerHelper('tecniciPortale', () => {
 //     return Tecnico.find().select('nome cognome').then((tecnici) => {
 //         return tecnici;
@@ -219,35 +242,59 @@ app.get('/tickets/:id', autenticato, (req, resp) => {
         viewModel['ticket'] = ticket;
         return viewModel;
     }).then((viewModel) => {
-        return Cliente.find().populate('_idAzienda', 'nomeAzienda').select('nome cognome').then((clienti) => {
-            console.log(clienti);
+        return Cliente.find().populate('_idAzienda', 'nomeAzienda').select('nome cognome').lean().then((clienti) => {
             viewModel['clientidb'] = clienti;
             return viewModel;
         }).then((viewModel) => {
-            return Tecnico.find().select('nome cognome').then((tecnici) => {
+            return Tecnico.find().select('nome cognome').lean().then((tecnici) => {
                 viewModel['tecnicidb'] = tecnici;
                 return viewModel;
             });
         }).then((viewModel) => {
-            return Prio.find().then((prios) => {
+            return Prio.find().lean().then((prios) => {
                 viewModel['priodb'] = prios;
                 return viewModel;
             });
         }).then((viewModel) => {
-            return Task.find().then((tasks) => {
+            return Task.find().lean().then((tasks) => {
                 viewModel['taskdb'] = tasks;
                 return viewModel;
             });
         }).then((viewModel) => {
-            return Stato.find().then((stati) => {
+            return Stato.find().lean().then((stati) => {
                 viewModel['statidb'] = stati;
                 return viewModel;
             });
         });
     }).then((viewModel) => {
-        console.log('************************* ticket ***************************');
-        console.log(viewModel);
-        console.log('************************************************************');
+        // console.log('************************* ticket ***************************');
+        if (_.findIndex(viewModel.clientidb, { '_id': viewModel.ticket._idCliente }) >= 0) {
+            var cliente = viewModel.clientidb[_.findIndex(viewModel.clientidb, { '_id': viewModel.ticket._idCliente })];
+            cliente['selected'] = true;
+            // console.log('cliente', cliente);
+        }
+        if (_.findIndex(viewModel.taskdb, { '_id': viewModel.ticket._idTask }) >= 0) {
+            var task = viewModel.taskdb[_.findIndex(viewModel.taskdb, { '_id': viewModel.ticket._idTask })];
+            task['selected'] = true;
+            // console.log('task', task);
+        }
+        if (_.findIndex(viewModel.tecnicidb, { '_id': viewModel.ticket._idTecnico }) >= 0) {
+            var tecnico = viewModel.tecnicidb[_.findIndex(viewModel.tecnicidb, { '_id': viewModel.ticket._idTecnico })];
+            tecnico['selected'] = true;
+            // console.log('tecnico', tecnico);
+        }
+        if (_.findIndex(viewModel.priodb, { '_id': viewModel.ticket._idPrio }) >= 0) {
+            var prio = viewModel.priodb[_.findIndex(viewModel.priodb, { '_id': viewModel.ticket._idPrio })];
+            prio['selected'] = true;
+            // console.log('prio', prio);
+        }
+        if (_.findIndex(viewModel.statidb, { '_id': viewModel.ticket._idStato }) >= 0) {
+            var stato = viewModel.statidb[_.findIndex(viewModel.statidb, { '_id': viewModel.ticket._idStato })];
+            stato['selected'] = true;
+            // console.log('stato', stato);
+        }
+        // console.log(viewModel);
+        // console.log('************************************************************');
         resp.render('ticket', { viewModel });
     }).catch((error) => {
         console.log(error);
@@ -281,7 +328,7 @@ app.get('/nuovoTicket', autenticato, (req, resp) => {
             return viewModel;
         });
     }).then((viewModel) => {
-        console.log(viewModel);
+        // console.log(viewModel);
         resp.render('creaTicket', { viewModel });
     }).catch((error) => {
         console.log(error);
@@ -289,8 +336,13 @@ app.get('/nuovoTicket', autenticato, (req, resp) => {
 });
 
 app.post('/tickets', autenticato, (req, resp) => {
-    var ticketBody = _.pick(req.body, ['titolo', '_idCliente', '_idTask', '_idPrio', '_idTecnico']);
+
+    console.log(req.body);
+
+    var ticketBody = _.pick(req.body, ['titolo', '_idCliente', '_idTask', '_idPrio', '_idStato', '_idTecnico']);
+
     var ticket = new Ticket(ticketBody);
+
     ticket.save().then((result) => {
         resp.render('tickets');
     }, (errore) => {
@@ -299,16 +351,29 @@ app.post('/tickets', autenticato, (req, resp) => {
 });
 
 app.post('/tickets/:id', autenticato, (req, resp) => {
-    console.log(req.body);
-    console.log(req.params);
+    // console.log(req.body);
+    // console.log(req.params);
+
+    var attributiTicket = _.pick(req.body, ['_idCliente', '_idPrio', '_idStato', '_idTask']);
+
+    Object.keys(attributiTicket).forEach(function (key, index) {
+        // key: the name of the object key
+        // index: the ordinal position of the key within the object 
+        attributiTicket[key] = ObjectID(attributiTicket[key]);
+    });
+
+    console.log(attributiTicket);
+
 
     var eventoDb = {
         creatoDa: req.tecnico.nome + ' ' + req.tecnico.cognome,
         testo: req.body.nuovoEventoTicket
     };
 
-    Ticket.findByIdAndUpdate({ _id: req.params.id }, { $push: { eventi: eventoDb } }).then((ticket) => {
-        resp.render('ticket', { ticket });
+    Ticket.findByIdAndUpdate({ _id: req.params.id }, { $set: { attributiTicket }, $push: { eventi: eventoDb } }).then((ticket) => {
+        //console.log(ticket);
+
+        //resp.render('ticket', { ticket });
     });
 });
 
