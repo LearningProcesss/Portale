@@ -48,6 +48,10 @@ var TicketSchema = mongoose.Schema({
             type: String,
             trim: true
         },
+        creatoDa: {
+            type: String,
+            trim: true
+        },
         creatoIl: {
             type: Number
         }
@@ -61,11 +65,21 @@ TicketSchema.pre('save', function (next) {
     ticket.creatoIl = moment.now();
 
     if (_.isUndefined(ticket._idStato)) {
-        ticket._idStato = 'Inbox';
+        Stato.findOne({ nome: 'Inbox' }).then((stato) => {
+            console.log('********', stato);
+            
+            ticket._idStato = stato._id;
+
+            console.log('**************', ticket);
+
+            next();
+            
+        });
     }
 
     next();
 });
+
 
 var Ticket = mongoose.model('Ticket', TicketSchema);
 

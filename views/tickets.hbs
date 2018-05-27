@@ -1,6 +1,6 @@
 <div class="container">
     <div class="row">
-        <div class="col-sm-2">
+        <div class="col-sm-5">
             <div class="btn-group">
                 <button type="button" class="btn btn-danger">Ordina per</button>
                 <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -9,10 +9,13 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li>
-                        <a href="/tickets/orderBy/prio">Prio</a>
+                        <a href="/tickets?_idTecnico={{viewModel.tecnicoHref}}&__sort=titolo">Titolo</a>
                     </li>
                     <li>
-                        <a href="#">Utente</a>
+                        <a href="/tickets?_idTecnico={{viewModel.tecnicoHref}}&__sort=_idPrio">Prio</a>
+                    </li>
+                    <li>
+                        <a href="/tickets?_idTecnico={{viewModel.tecnicoHref}}&__sort=_idUtente">Utente</a>
                     </li>
                     <li>
                         <a href="#">Data creazione ticket</a>
@@ -24,8 +27,8 @@
                 </ul>
             </div>
         </div>
-        <div class="col-sm-10">
-            {{#each tickets}}
+        <div class="col-md-10">
+            {{#each viewModel.tickets}}
             <div class='col-sm-8'>
                 <div class="panel panel-{{prioClass prio}}">
                     <div class="panel-heading">
@@ -37,7 +40,8 @@
                             {{ultimoEvento eventi}}
                         </p>
                         <hr>
-                        <p>{{prio}}</p>
+                        <p>{{_idPrio.nome}}</p>
+                        <p>{{_idTecnico.nome}} {{_idTecnico.cognome}}</p>
                     </div>
                     <div class='panel-footer'>
                         <a class="btn btn-success" href="/tickets/{{_id}}">Apri</a>

@@ -18,6 +18,7 @@ var { Cliente } = require('./server/models/cliente');
 var { Azienda } = require('./server/models/azienda');
 var { Prio } = require('./server/models/prio');
 var { Task } = require('./server/models/task');
+var { Stato } = require('./server/models/stato');
 
 var app = express();
 
@@ -26,17 +27,18 @@ var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {
 // var qs = new mongoQS({});
 var processQuery = qs({
     autoDetect: [
-        { 
-            fieldPattern: /_id$/, 
-            dataType: 'objectId' 
+        {
+            fieldPattern: /_id$/,
+            dataType: 'objectId'
         }
     ],
     converters: { objectId: ObjectID }
 });
 
-// hbs.registerPartials(__dirname + '/views/partials');
+hbs.registerPartials(__dirname + '/views/partials');
 app.set('views', __dirname + '/views');
 app.set('view engine', 'hbs');
+
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -75,21 +77,13 @@ hbs.registerHelper('ultimoEvento', (eventi) => {
     return '';
 });
 
-hbs.registerHelper('clientidb', () => {
-    Cliente.find().select('nome cognome').then((clienti) => {
-        console.log(clienti);
+// hbs.registerHelper('tecniciPortale', () => {
+//     return Tecnico.find().select('nome cognome').then((tecnici) => {
+//         return tecnici;
+//     }).catch((error) => {
 
-        return clienti;
-    });
-});
-
-hbs.registerHelper('tecniciPortale', () => {
-    Tecnico.find().then((tecnici) => {
-
-    }).catch((error) => {
-
-    });
-});
+//     });
+// });
 
 var autenticato = (req, resp, next) => {
     var x = req.session.xt;
@@ -113,6 +107,10 @@ var autenticato = (req, resp, next) => {
         });
     }
 };
+
+app.get('/test', (req, resp) => {
+    resp.render('test');
+});
 
 app.get('/', (req, resp) => {
     resp.render('dashboard');
@@ -142,11 +140,13 @@ app.post('/loginOrSignin', (req, resp) => {
     Tecnico.findOne({ email: tecnicoFromHtml.email }).then((tecnico) => {
 
         if (!_.isNull(tecnico)) {
+
             var token = tecnico.generaTocken();
 
             req.session.xt = token;
 
-            resp.redirect('/tickets');
+            resp.redirect(`/tickets?_idTecnico=${tecnico._id}`);
+
         } else {
 
             var tecnico = new Tecnico(tecnicoFromHtml);
@@ -154,8 +154,10 @@ app.post('/loginOrSignin', (req, resp) => {
             tecnico.save().then(() => {
                 return tecnico.generaTocken();
             }).then((token) => {
+
                 req.session.xt = token;
-                resp.redirect('/tickets');
+
+                resp.redirect(`/tickets?_idTecnico=${tecnico._id}`);
             }).catch(() => {
                 resp.status(400).send();
             });
@@ -164,59 +166,91 @@ app.post('/loginOrSignin', (req, resp) => {
 
 });
 
+//Dalla funzione autenticato ottengo il tecnico.
+//Se nella query il tecnico è diverso da quello che è in sessione, mando questa info attraverso il viewmodel, per comporre le query dinamicamente
 app.get('/tickets', autenticato, (req, resp) => {
-    // const query = qs.parse(req.query);
+    var viewModel = {
+        tecnici: [],
+        tickets: [],
+        tecnicoHref: req.tecnico._id
+    };
 
-    // var query = processQuery(req.query,
-    //     { 
-    //         _idTecnico: { 
-    //             dataType: 'objectId'
-    //         },
-    //         titolo: {
-    //             dataType: 'string'
-    //         }
-    //     },
-    //     true
-    // );
+    // console.log(viewModel);
+
+    // console.log(req.tecnico);
+
+    // console.log(req.query);
+
+    if (req.query.hasOwnProperty('_idTecnico')) {
+        if (req.query['_idTecnico'] != req.tecnico._id) {
+            viewModel.tecnicoHref = req.query['_idTecnico'];
+        }
+    }
+
     var query = processQuery(req.query);
 
-    Ticket.find(query.filter).populate('_idCliente', 'nome cognome').then((tickets) => {
-        resp.render('tickets', { tickets });
-    }, (errore) => {
+    return Ticket.find(query.filter).populate('_idCliente', 'nome cognome').populate('_idPrio', 'nome').populate('_idTecnico', 'nome cognome').sort(query.sort).then((tickets) => {
+        viewModel.tickets = tickets;
+        return viewModel;
+    }).then((viewModel) => {
+        return Tecnico.find({}).select('nome cognome').then((tecnici) => {
+            viewModel.tecnici = tecnici;
+            return viewModel;
+        });
+    }).then((viewModel) => {
+        // console.log(viewModel);
+
+        resp.render('tickets', { viewModel });
+    }).catch((errore) => {
         resp.status(400).send();
     });
-
 });
-
-app.get('/tickets/:actions/:property', autenticato, (req, resp) => {
-    console.log('/tickets/:actions/:property', req.params, req.query);
-
-    var sorter = {};
-
-    sorter[req.params.property] = 1;
-
-    if (req.params.actions === 'orderBy') {
-        Ticket.find({}).sort(sorter).then((tickets) => {
-            resp.render('tickets', { tickets });
-        }).catch((error) => {
-            console.log(error);
-
-            resp.status(400).send();
-        });
-    }
-});
-
 
 app.get('/tickets/:id', autenticato, (req, resp) => {
+    var viewModel = {
+        ticket: {}
+    };
 
     if (!ObjectID.isValid(req.params.id)) {
         return resp.status(404).send();
     }
 
-    Ticket.findById(req.params.id).then((ticket) => {
-        resp.render('ticket', { ticket });
-    }).catch((errore) => {
-        return resp.status(404).send();
+    return Ticket.findById(req.params.id).then((ticket) => {
+        viewModel['ticket'] = ticket;
+        return viewModel;
+    }).then((viewModel) => {
+        return Cliente.find().populate('_idAzienda', 'nomeAzienda').select('nome cognome').then((clienti) => {
+            console.log(clienti);
+            viewModel['clientidb'] = clienti;
+            return viewModel;
+        }).then((viewModel) => {
+            return Tecnico.find().select('nome cognome').then((tecnici) => {
+                viewModel['tecnicidb'] = tecnici;
+                return viewModel;
+            });
+        }).then((viewModel) => {
+            return Prio.find().then((prios) => {
+                viewModel['priodb'] = prios;
+                return viewModel;
+            });
+        }).then((viewModel) => {
+            return Task.find().then((tasks) => {
+                viewModel['taskdb'] = tasks;
+                return viewModel;
+            });
+        }).then((viewModel) => {
+            return Stato.find().then((stati) => {
+                viewModel['statidb'] = stati;
+                return viewModel;
+            });
+        });
+    }).then((viewModel) => {
+        console.log('************************* ticket ***************************');
+        console.log(viewModel);
+        console.log('************************************************************');
+        resp.render('ticket', { viewModel });
+    }).catch((error) => {
+        console.log(error);
     });
 });
 
@@ -242,6 +276,11 @@ app.get('/nuovoTicket', autenticato, (req, resp) => {
             return viewModel;
         });
     }).then((viewModel) => {
+        return Stato.find().then((stati) => {
+            viewModel['statidb'] = stati;
+            return viewModel;
+        });
+    }).then((viewModel) => {
         console.log(viewModel);
         resp.render('creaTicket', { viewModel });
     }).catch((error) => {
@@ -249,13 +288,27 @@ app.get('/nuovoTicket', autenticato, (req, resp) => {
     });
 });
 
-app.post('/tickets', (req, resp) => {
+app.post('/tickets', autenticato, (req, resp) => {
     var ticketBody = _.pick(req.body, ['titolo', '_idCliente', '_idTask', '_idPrio', '_idTecnico']);
     var ticket = new Ticket(ticketBody);
     ticket.save().then((result) => {
         resp.render('tickets');
     }, (errore) => {
         resp.status(400).send(errore);
+    });
+});
+
+app.post('/tickets/:id', autenticato, (req, resp) => {
+    console.log(req.body);
+    console.log(req.params);
+
+    var eventoDb = {
+        creatoDa: req.tecnico.nome + ' ' + req.tecnico.cognome,
+        testo: req.body.nuovoEventoTicket
+    };
+
+    Ticket.findByIdAndUpdate({ _id: req.params.id }, { $push: { eventi: eventoDb } }).then((ticket) => {
+        resp.render('ticket', { ticket });
     });
 });
 

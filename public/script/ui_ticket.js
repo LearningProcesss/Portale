@@ -1,5 +1,5 @@
-$("div[name='ticketBox']").click(function (e) { 
+$(document).ready(function () {
+    // alert('caricato');
 
-    console.log('ok');
-    
+    // alert($.cookie('session'));
 });
