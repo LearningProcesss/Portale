@@ -10,6 +10,7 @@ var morgan = require('morgan');
 var path = require('path');
 const mongoQS = require('mongo-querystring');
 const qs = require('query-params-mongo');
+const storage = require('node-persist');
 
 var { ObjectID } = require('mongodb');
 var { Ticket } = require('./server/models/ticket');
@@ -46,7 +47,19 @@ app.use(cookieSession({
     name: 'session',
     keys: ['key1', 'key2']
 }));
-app.use(morgan('combined', { stream: accessLogStream }))
+app.use(morgan('combined', { stream: accessLogStream }));
+
+storage.init({
+    dir: __dirname + '/server/persistent',
+
+    stringify: JSON.stringify,
+
+    parse: JSON.parse,
+
+    encoding: 'utf8'
+}).then((ok) => {
+
+});
 
 
 hbs.registerHelper('prioClass', (valorePrioTicket) => {
@@ -100,14 +113,6 @@ hbs.registerHelper('ifCond', function (v1, operator, v2, options) {
     }
 });
 
-// hbs.registerHelper('tecniciPortale', () => {
-//     return Tecnico.find().select('nome cognome').then((tecnici) => {
-//         return tecnici;
-//     }).catch((error) => {
-
-//     });
-// });
-
 var autenticato = (req, resp, next) => {
     var x = req.session.xt;
 
@@ -144,11 +149,18 @@ app.get('/signin', (req, resp) => {
 });
 
 app.get('/login', (req, resp) => {
-    resp.render('login');
+    resp.render('login', { titolo: 'Rocket' });
 });
 
 app.get('/dashboard', autenticato, (req, resp) => {
-    resp.render('dashboard');
+    var viewModel = {
+        tecnicidb: []
+    };
+
+    storage.getItem('tecnici').then((result) => {
+        viewModel.tecnicidb = result;
+    });
+    resp.render('dashboard', { viewModel });
 });
 
 app.post('/logout', (req, resp) => {
@@ -193,16 +205,10 @@ app.post('/loginOrSignin', (req, resp) => {
 //Se nella query il tecnico è diverso da quello che è in sessione, mando questa info attraverso il viewmodel, per comporre le query dinamicamente
 app.get('/tickets', autenticato, (req, resp) => {
     var viewModel = {
-        tecnici: [],
+        tecnicidb: [],
         tickets: [],
         tecnicoHref: req.tecnico._id
     };
-
-    // console.log(viewModel);
-
-    // console.log(req.tecnico);
-
-    // console.log(req.query);
 
     if (req.query.hasOwnProperty('_idTecnico')) {
         if (req.query['_idTecnico'] != req.tecnico._id) {
@@ -210,23 +216,55 @@ app.get('/tickets', autenticato, (req, resp) => {
         }
     }
 
-    var query = processQuery(req.query);
+    storage.getItem('tecnici').then((result) => {
+        viewModel.tecnicidb = result;
+    });
 
-    return Ticket.find(query.filter).populate('_idCliente', 'nome cognome').populate('_idPrio', 'nome').populate('_idTecnico', 'nome cognome').sort(query.sort).then((tickets) => {
+    //var query = processQuery(req.query);
+
+    return Ticket.aggregate([{
+        $lookup: {
+            from: "prios",
+            localField: "_idPrio",
+            foreignField: "_id",
+            as: "priotik"
+        }
+    },
+    {
+        $project: {
+            nome: 1,
+            priotik: {
+                $filter: {
+                    input: '$priotik',
+                    as: 'prio',
+                    cond: { $eq: ["$$prio.interno", 1] }
+                }
+            }
+        }
+    }
+    ]).then((tickets) => {
         viewModel.tickets = tickets;
-        return viewModel;
-    }).then((viewModel) => {
-        return Tecnico.find({}).select('nome cognome').then((tecnici) => {
-            viewModel.tecnici = tecnici;
-            return viewModel;
-        });
-    }).then((viewModel) => {
-        // console.log(viewModel);
 
         resp.render('tickets', { viewModel });
-    }).catch((errore) => {
-        resp.status(400).send();
     });
+
+    // return Ticket.find(query.filter)
+    //     .populate('_idCliente', 'nome cognome')
+    //     .populate('_idPrio', 'nome')
+    //     .populate('_idTecnico', 'nome cognome')
+    //     .sort(query.sort).then((tickets) => {
+    //         viewModel.tickets = tickets;
+    //         return viewModel;
+    //     }).then((viewModel) => {
+    //         return Tecnico.find({}).select('nome cognome').then((tecnici) => {
+    //             viewModel.tecnicidb = tecnici;
+    //             return viewModel;
+    //         });
+    //     }).then((viewModel) => {
+    //         resp.render('tickets', { viewModel });
+    //     }).catch((errore) => {
+    //         resp.status(400).send();
+    //     });
 });
 
 app.get('/tickets/:id', autenticato, (req, resp) => {
@@ -302,49 +340,56 @@ app.get('/tickets/:id', autenticato, (req, resp) => {
 });
 
 app.get('/nuovoTicket', autenticato, (req, resp) => {
-    var viewModel = {};
+    var viewModel = {
+        tecnicidb: []
+    };
+
+    storage.getItem('tecnici').then((result) => {
+        viewModel.tecnicidb = result;
+    });
+
     return Cliente.find().populate('_idAzienda', 'nomeAzienda').select('nome cognome').then((clienti) => {
         console.log(clienti);
         viewModel['clientidb'] = clienti;
         return viewModel;
-    }).then((viewModel) => {
-        return Tecnico.find().select('nome cognome').then((tecnici) => {
-            viewModel['tecnicidb'] = tecnici;
-            return viewModel;
+    })
+        // .then((viewModel) => {
+        //     return Tecnico.find().select('nome cognome').then((tecnici) => {
+        //         viewModel['tecnicidb'] = tecnici;
+        //         return viewModel;
+        //     });
+        // })
+        .then((viewModel) => {
+            return Prio.find().then((prios) => {
+                viewModel['priodb'] = prios;
+                return viewModel;
+            });
+        }).then((viewModel) => {
+            return Task.find().then((tasks) => {
+                viewModel['taskdb'] = tasks;
+                return viewModel;
+            });
+        }).then((viewModel) => {
+            return Stato.find().then((stati) => {
+                viewModel['statidb'] = stati;
+                return viewModel;
+            });
+        }).then((viewModel) => {
+            // console.log(viewModel);
+            resp.render('creaTicket', { viewModel });
+        }).catch((error) => {
+            console.log(error);
         });
-    }).then((viewModel) => {
-        return Prio.find().then((prios) => {
-            viewModel['priodb'] = prios;
-            return viewModel;
-        });
-    }).then((viewModel) => {
-        return Task.find().then((tasks) => {
-            viewModel['taskdb'] = tasks;
-            return viewModel;
-        });
-    }).then((viewModel) => {
-        return Stato.find().then((stati) => {
-            viewModel['statidb'] = stati;
-            return viewModel;
-        });
-    }).then((viewModel) => {
-        // console.log(viewModel);
-        resp.render('creaTicket', { viewModel });
-    }).catch((error) => {
-        console.log(error);
-    });
 });
 
 app.post('/tickets', autenticato, (req, resp) => {
-
-    console.log(req.body);
 
     var ticketBody = _.pick(req.body, ['titolo', '_idCliente', '_idTask', '_idPrio', '_idStato', '_idTecnico']);
 
     var ticket = new Ticket(ticketBody);
 
     ticket.save().then((result) => {
-        resp.render('tickets');
+        resp.redirect(`/tickets?_idTecnico=${req.tecnico._id}`);
     }, (errore) => {
         resp.status(400).send(errore);
     });
@@ -357,8 +402,6 @@ app.post('/tickets/:id', autenticato, (req, resp) => {
     var attributiTicket = _.pick(req.body, ['_idCliente', '_idPrio', '_idStato', '_idTask']);
 
     Object.keys(attributiTicket).forEach(function (key, index) {
-        // key: the name of the object key
-        // index: the ordinal position of the key within the object 
         attributiTicket[key] = ObjectID(attributiTicket[key]);
     });
 
@@ -378,6 +421,13 @@ app.post('/tickets/:id', autenticato, (req, resp) => {
 });
 
 app.listen(process.env.PORT, () => {
+
+    Tecnico.find({}).select('nome cognome').lean().then((tecnici) => {
+        storage.setItem('tecnici', tecnici).then(() => {
+
+        });
+    });
+
     console.log('Server started at port 3000!');
 });
 

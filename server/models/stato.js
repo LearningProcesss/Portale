@@ -8,6 +8,9 @@ var StatoSchema = mongoose.Schema({
         required: true,
         minlength: 1,
         trim: true
+    },
+    interno: {
+        type: Number
     }
 });
 

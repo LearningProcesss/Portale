@@ -1,19 +1,16 @@
 $(document).ready(function () {
     $('#formInvioEvento').submit(function (e) {
-        // e.preventDefault();
-        //alert('ok');
-        //    $('[id^="_id"]').each(collection, function (indexInArray, valueOfElement) { 
-        //         $(valueOfElement).appendTo(this);
-        //    });
         $('[id^="_id"]').each(function (index, element) {
-            //alert(index, element);
-            console.log(element);
-
             $(element).appendTo($('#formInvioEvento'));
         });
-
-        console.log(this);
-
         return true;
     });
 });
+
+// $(document).ready(function () {
+//     $('[id^="_navAction"]').click(function (e) {
+//         alert(e);
+//         $('[id^="_navAction"]').removeClass('active');
+//         $(this).addClass('active');
+//     });
+// });
