@@ -31,10 +31,13 @@ var TicketSchema = mongoose.Schema({
         ref: 'Stato'
     },
     creatoIl: {
-        type: Number
+        type: Date
+    },
+    modificatoIl: {
+        type: Date
     },
     chiusoIl: {
-        type: Number
+        type: Date
     },
     ticketProcad: {
         type: Number
@@ -53,7 +56,7 @@ var TicketSchema = mongoose.Schema({
             trim: true
         },
         creatoIl: {
-            type: Number
+            type: Date
         }
     }]
 });

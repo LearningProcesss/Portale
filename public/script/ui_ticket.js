@@ -1,3 +1,4 @@
+
 $(document).ready(function () {
     $('#formInvioEvento').submit(function (e) {
         $('[id^="_id"]').each(function (index, element) {
@@ -8,9 +9,20 @@ $(document).ready(function () {
 });
 
 // $(document).ready(function () {
-//     $('[id^="_navAction"]').click(function (e) {
-//         alert(e);
-//         $('[id^="_navAction"]').removeClass('active');
-//         $(this).addClass('active');
+//     $('[id^="_dateEvento"]').each(function (index, element) {
+
+//         alert($(element).val());
+//         alert(moment($(element).val()).format('DD-MM-YYYY'));
 //     });
 // });
+
+// $(document).ready(function() { 
+//     $(window).load(function() { 
+//         $('[id^="_dateEvento"]').each(function (index, element) {
+
+//             alert($(element).val());
+//             //alert(moment($(element).val()).format('DD-MM-YYYY'));
+//         });
+//     });
+//   });
+

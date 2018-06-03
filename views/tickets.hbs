@@ -28,9 +28,28 @@
             </div>
         </div>
         <div class="col-md-10">
-            {{#each viewModel.tickets}}
+            <table data-toggle="table" data-height="800" data-striped="true" data-search="true" data-show-columns="true">
+                <thead>
+                    <tr>
+                        <th>test</th>
+                        <th>Creato il</th>
+                        <th>Modificato il</th>
+                        <th>Cliente</th>
+                        <th>Titolo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each viewModel.tickets}}
+                    <tr>
+                        <td><a class="btn btn-success" href="/tickets/{{_id}}">Apri</a></td>
+                        <td>{{formatMongoDate creatoIl}}</td>
+                        <td>{{formatMongoDate modifcatoIl}}</td>
+                        <td>{{clientiDb.nome}}</td>
+                        <td>{{titolo}}</td>
+                    </tr>
+                    <!--
             <div class='col-sm-8'>
-                <div class="panel panel-{{prioClass prio}}">
+                <div id=`_ticketId_{{{_id}}}` class="panel panel-{{prioClass prio}}">
                     <div class="panel-heading">
                         <h4 class='panel-title'>{{titolo}}</h4>
                     </div>
@@ -48,7 +67,11 @@
                     </div>
                 </div>
             </div>
-            {{/each}}
+            -->
+                    {{/each}}
+
+                </tbody>
+            </table>
         </div>
     </div>
 

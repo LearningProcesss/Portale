@@ -12,7 +12,9 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.2",
+    "bootstrap-table": "^1.12.1",
     "cookie-session": "^2.0.0-beta.3",
+    "deep-diff": "^1.0.1",
     "express": "^4.16.3",
     "handlebars": "^4.0.11",
     "hbs": "^4.0.1",

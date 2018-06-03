@@ -1,5 +1,6 @@
 const _ = require('lodash');
 
+
 var { ObjectID } = require('mongodb');
 var { Ticket } = require('../models/ticket');
 var { Tecnico } = require('../models/tecnico');
@@ -11,8 +12,14 @@ var { Stato } = require('../models/stato');
 
 
 class TicketViewModel {
-    constructor() {
 
+    constructor(tickets, tecnicoHRef) {
+        if (!_.isUndefined(tickets)) {
+            this.tickets = tickets;
+        }
+        if (!_.isUndefined(tecnicoHRef)) {
+            this.tecnicoHref = tecnicoHRef;
+        }
     }
     async creaSimpleTicketViewModel() {
         this.clientidb = await Cliente.find().populate('_idAzienda', 'nomeAzienda').select('nome cognome');
@@ -20,6 +27,11 @@ class TicketViewModel {
         this.priodb = await Prio.find();
         this.taskdb = await Task.find();
         this.statidb = await Stato.find();
+    }
+    async creaTicketsViewModelList() {
+        if (!_.isUndefined(this.tickets) && !_.isNull(this.tickets)) {
+            
+        }
     }
     async creaTicketViewModel(queryTicket, queryTecnico, queryClienti, queryTask, queryPrio, queryStato) {
         this.ticket = await queryTicket;

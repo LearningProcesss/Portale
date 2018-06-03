@@ -87,7 +87,8 @@
                                     <option value="{{_id}}" {{#if selected }} selected="selected" {{/if}}>{{nome}}</option>
                                     {{/each}}
                                 </select>
-                                <button class="btn btn-success form-control">Indietro</button>
+                                {{!-- <button class="btn btn-success form-control">Indietro </button> --}}
+                                <a class="btn btn-success form-control" href="{{indietro}}">Indietro</a>
                             </div>
                             <!--
                             <div class="well">
@@ -112,7 +113,7 @@
                                 <div class="panel-heading main-color-bg">
                                     <h3 class="panel-title">
                                         <b>Da:</b> {{creatoDa}}
-                                        <b>Il:</b>{{creatoIl}}
+                                        <b>Il:</b> {{formatMongoDate creatoIl}}
                                     </h3>
                                 </div>
                                 <div class="panel-body">
@@ -129,7 +130,7 @@
                                         <textarea class="form-control" id="nuovoEventoTicket" name="nuovoEventoTicket"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success">Invia</button>
-                                    <button type="button" class="btn btn-info">Allega file</button>
+                                    <button type="file" class="btn btn-info">Allega file</button>
                                 </form>
                             </div>
 
