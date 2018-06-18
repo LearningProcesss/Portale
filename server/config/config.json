@@ -1,12 +1,12 @@
 {
     "test": {
         "PORT": 3000,
-        "MONGODB_URI": "mongodb://localhost:27017/PortaleSupporto",
+        "MONGODB_URI": "",
         "JWT_SECRET": "!2M@34n*T("
     },
     "development": {
         "PORT": 3000,
-        "MONGODB_URI": "mongodb://anw:ZsE41X@ds143070.mlab.com:43070/portalesupporto",
+        "MONGODB_URI": "",
         "JWT_SECRET": "!2M@34n*T("
     }
 }
